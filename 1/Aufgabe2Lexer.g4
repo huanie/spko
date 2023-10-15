@@ -4,28 +4,26 @@ Clock: WORD
      | TIME
      ;
 
-WORD: 'Midnight'
-    | 'Noon'
-    | '12' ' ' 'midnight'
-    | '12' ' ' 'noon'
-    ;
+fragment WORD: 'Midnight'
+             | 'Noon'
+	     | '12' WS 'midnight'
+	     | '12' WS 'noon'
+	     ;
 
-TIME: HOUR SEPARATOR MINUTE FORMAT
-    ;
+fragment TIME: HOUR SEPARATOR MINUTE WS FORMAT;
 
-FORMAT: 'a.m.'
-      | 'p.m.'
-      ;
+fragment FORMAT: 'a.m.'
+               | 'p.m.'
+      	       ; 
 
-SEPARATOR: ':'
-         ;
+fragment SEPARATOR: ':';
 
-HOUR: [1-9][0-9]?
-    | '2'[0-3]
-    ;
+fragment HOUR: [1-9]
+             | '1'[0-2]
+	     ;
 
-MINUTE: [0-9]
-      | [0-5][0-9]
-      ;
+fragment MINUTE: [0-9]
+               | [0-5][0-9]
+    	       ;
 
 WS: [ \t\r\n]+ -> channel(HIDDEN);
