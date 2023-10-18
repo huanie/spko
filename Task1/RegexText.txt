@@ -3,3 +3,4 @@ xxx% 012d yyy%%
 xxx%1$d yyy
 %1$0+(32.10fyyy
 Wochentag: %tA Uhrzeit: %tT
+%1$d%1$d
