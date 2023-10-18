@@ -2,15 +2,17 @@ parser grammar SExpressionParser;
 
 options { tokenVocab=SExpressionLexer; }
 
-sexpression: LEFT_PAREN form RIGHT_PAREN
-           | LEFT_BRACKET form RIGHT_BRACKET
-           | LEFT_CURLY form RIGHT_CURLY
+sexpression: LEFT_PAREN head rest* RIGHT_PAREN
+           | LEFT_BRACKET head rest* RIGHT_BRACKET
+           | LEFT_CURLY head rest* RIGHT_CURLY
+           | literal
            ;
 
-form: head arguments // (+ + + w wow)
-    | form sexpression
+literal: SYMBOL;
+
+head: SYMBOL
+    | sexpression;
+
+rest: (WS? SYMBOL WS?)+
+    | sexpression+
     ;
-
-head: SYMBOLS;
-
-arguments: (WS? SYMBOLS WS?)*;
