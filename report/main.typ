@@ -76,8 +76,7 @@ There is a distinction between using midnight, noon to describe time and using n
 
 == a) Little language
 
-I came up with a grammar for function calls in the form of `(fun arg1
-arg2)`. The first element in the list *MUST* be a symbol.
+I came up with a grammar for function calls in the form of `(fun arg1 arg2)`. The first element in the list *MUST* be a symbol.
 
 ```
 lexer grammar SExpressionLexer;
@@ -114,7 +113,7 @@ rest: SYMBOL
 
 It does not matter which `LEFT` `RIGHT` pair is used, they only need to match each other, which is valid in many Scheme implementations.
 
-Test: `(+ (+ 2 {+ 2 3}) { *  3    5   })`
+Test: `(+ (+ 2 {+ 2 3}) { *  [/ 4 2]    5   })`
 
 I also maintain a grammar for Blueprint (https://jwestman.pages.gitlab.gnome.org/blueprint-compiler/) using tree-sitter on https://github.com/huanie/tree-sitter-blueprint :).
 
@@ -128,6 +127,9 @@ are nodes.
 Although parsing is usually done with a visitor pattern in OOP (ANTLR4 also prefers it), I use
 recursion since it feels more natural to me and it is fine with such a
 small language.
+
+Iterate through all arguments and check if they are a literal or a sexpression.
+A literal will be simply be appended to the argument list, a sexpression will recurse (see SExpression record class) before getting appended.
 
 ```java
 public interface Node {
@@ -166,12 +168,17 @@ public interface Node {
 }
 ```
 
-Using the AST I made a calculator. The accumulator needs to be
-initialized with the first item in the argument list. Java's
-`Function<T,R>` only supports functions with one parameter, as a
-workaround I made use of currying. I also made good use of pattern
-matching which was introduced in Java 21 which eliminates the visitor
-pattern in my opinion.
+Using the AST I made a calculator. Java's `Function<T,R>` only
+supports functions with one parameter, as a workaround I made use of
+currying. I also made good use of pattern matching which was
+introduced in Java 21 which eliminates the visitor pattern in my
+opinion.
+
+The accumulator needs to be initialized with the first item in the
+argument list. Then the operation is checked to get the correct
+function.  The subsequent arguments will be passed to the math
+function or the recursion will continue when encountering a
+sexpression.
 
 ```java
 private static final Map<String, Function<Double, Function<Double, Double>>>
