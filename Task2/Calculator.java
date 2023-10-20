@@ -16,14 +16,13 @@ public class Calculator {
     }
 
     private static double reduceSexp(Node.SExpression sexp) {
-        double accum = 0;
         var iterator = sexp.arguments().iterator();
-        switch (iterator.next()) {
-            case Node.SExpression x -> accum = reduceSexp(x);
-            case Node.Literal x -> accum = Double.parseDouble(x.literal());
+        double accum = switch (iterator.next()) {
+            case Node.SExpression x -> reduceSexp(x);
+            case Node.Literal x -> Double.parseDouble(x.literal());
             default -> throw new IllegalStateException(
                     "Unexpected value: " + sexp.arguments().iterator().next());
-        }
+        };
         Function<Double, Function<Double, Double>> fun =
                 switch (operators.get(sexp.operation())) {
                     case Plus -> x -> y -> x + y;
