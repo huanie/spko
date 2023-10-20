@@ -1,6 +1,6 @@
 = Task 1
 
-== a) match Java format strings
+== a) Match Java format strings
 
 The regex is located in `java.util.Formatter` source code https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/java/util/Formatter.java. The variable is called `FORMAT_SPECIFIER`.
 
@@ -34,7 +34,7 @@ public static void print(Queue<Format> lst, String text) {
 }
 ```
 
-== b) writing ANTLR4 lexer rules for 12-hour clock
+== b) Writing ANTLR4 lexer rules for 12-hour clock
 
 From reading the Wikipedia entry https://en.wikipedia.org/wiki/12-hour_clock. I came up with following lexer rules:
 
@@ -124,51 +124,45 @@ My abstract syntax tree will consist of nodes which are sexpressions
 or literals. A sexpression contains the operation and arguments which
 are nodes.
 
-```java
-public interface Node {
-    record SExpression(String operation, Iterable<Node> arguments)
-            implements Node {
-    static SExpression parse(
-            SExpressionParser.SexpressionContext sexpression) {
-        var arguments = sexpression.rest();
-        var head = sexpression.head().getText();
-        return new SExpression(head, recurse(arguments));
-    }
-    private SExpression(String text,
-                        List<SExpressionParser.RestContext> rest) {
-        this(text, Node.recurse(rest));
-    }
-    record Literal(String literal) implements Node {
-        @Override
-        public String toString() {
-            return literal;
-        }
-    }
-}
-```
 
 Although parsing is usually done with a visitor pattern in OOP (ANTLR4 also prefers it), I use
 recursion since it feels more natural to me and it is fine with such a
 small language.
 
 ```java
-private static Iterable<Node> recurse(
-        List<SExpressionParser.RestContext> arguments) {
-    var argumentAccum = new ArrayList<Node>(arguments.size());
-    for (var arg : arguments) {
-        var literal = arg.SYMBOL();
-        var reduce = arg.sexpression();
-        if (literal != null) {
-            argumentAccum.add(new Literal(literal.getText()));
-        } else if (reduce != null) {
-            argumentAccum.add(new SExpression(reduce.head().getText(),
-                    reduce.rest()));
-        } else {
-            throw new RuntimeException(
-                    String.format("What is this: %s ?%n", arg.getText()));
+public interface Node {
+    static SExpression parse(
+            SExpressionParser.SexpressionContext sexpression) {
+        var arguments = sexpression.rest();
+        var head = sexpression.head().getText();
+        return new SExpression(head, recurse(arguments));
+    }
+    private static Iterable<Node> recurse(
+            List<SExpressionParser.RestContext> arguments) {
+        var argumentAccum = new ArrayList<Node>(arguments.size());
+        for (var arg : arguments) {
+            var literal = arg.SYMBOL();
+            var reduce = arg.sexpression();
+            if (literal != null) {
+                argumentAccum.add(new Literal(literal.getText()));
+            } else if (reduce != null) {
+                argumentAccum.add(new SExpression(reduce.head().getText(),
+                        reduce.rest()));
+            } else {
+                throw new RuntimeException(
+                        String.format("What is this: %s ?%n", arg.getText()));
+            }
+        }
+        return argumentAccum;
+    }
+    record SExpression(String operation, Iterable<Node> arguments)
+            implements Node {
+        private SExpression(String text,
+                            List<SExpressionParser.RestContext> rest) {
+            this(text, Node.recurse(rest));
         }
     }
-    return argumentAccum;
+    record Literal(String literal) implements Node {}
 }
 ```
 
@@ -180,7 +174,18 @@ matching which was introduced in Java 21 which eliminates the visitor
 pattern in my opinion.
 
 ```java
-public static double calculate(Node.SExpression sexp) {
+private static final Map<String, Function<Double, Function<Double, Double>>>
+        operators;
+static {
+    Map<String, Function<Double, Function<Double, Double>>> map =
+            new HashMap<>();
+    map.put("+", x -> y -> x + y);
+    map.put("-", x -> y -> x - y);
+    map.put("*", x -> y -> x * y);
+    map.put("/", x -> y -> x / y);
+    operators = Collections.unmodifiableMap(map);
+}
+private static double reduceSexp(Node.SExpression sexp) {
     var iterator = sexp.arguments().iterator();
     double accum = switch (iterator.next()) {
         case Node.SExpression x -> reduceSexp(x);
@@ -188,18 +193,12 @@ public static double calculate(Node.SExpression sexp) {
         default -> throw new IllegalStateException(
                 "Unexpected value: " + sexp.arguments().iterator().next());
     };
-    Function<Double, Function<Double, Double>> fun =
-            switch (operators.get(sexp.operation())) {
-                case Plus -> x -> y -> x + y;
-                case Minus -> x -> y -> x - y;
-                case Times -> x -> y -> x * y;
-                case Divide -> x -> y -> x / y;
-            };
+    var fun = operators.get(sexp.operation());
     while (iterator.hasNext()) {
         var arg = iterator.next();
         accum = fun.apply(accum).apply(switch (arg) {
             case Node.Literal x -> Double.parseDouble(x.literal());
-            case Node.SExpression reduce -> calculate(reduce);
+            case Node.SExpression reduce -> reduceSexp(reduce);
             default -> throw new IllegalStateException(
                     "Unexpected value: " + arg);
         });

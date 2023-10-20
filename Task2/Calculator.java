@@ -4,14 +4,16 @@ import java.util.Map;
 import java.util.function.Function;
 
 public class Calculator {
-    private static final Map<String, Operation> operators;
+    private static final Map<String, Function<Double, Function<Double, Double>>>
+            operators;
 
     static {
-        Map<String, Operation> map = new HashMap<>();
-        map.put("+", Operation.Plus);
-        map.put("-", Operation.Minus);
-        map.put("*", Operation.Times);
-        map.put("/", Operation.Divide);
+        Map<String, Function<Double, Function<Double, Double>>> map =
+                new HashMap<>();
+        map.put("+", x -> y -> x + y);
+        map.put("-", x -> y -> x - y);
+        map.put("*", x -> y -> x * y);
+        map.put("/", x -> y -> x / y);
         operators = Collections.unmodifiableMap(map);
     }
 
@@ -23,13 +25,7 @@ public class Calculator {
             default -> throw new IllegalStateException(
                     "Unexpected value: " + sexp.arguments().iterator().next());
         };
-        Function<Double, Function<Double, Double>> fun =
-                switch (operators.get(sexp.operation())) {
-                    case Plus -> x -> y -> x + y;
-                    case Minus -> x -> y -> x - y;
-                    case Times -> x -> y -> x * y;
-                    case Divide -> x -> y -> x / y;
-                };
+        var fun = operators.get(sexp.operation());
         while (iterator.hasNext()) {
             var arg = iterator.next();
             accum = fun.apply(accum).apply(switch (arg) {
