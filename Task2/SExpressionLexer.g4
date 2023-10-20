@@ -1,5 +1,5 @@
 lexer grammar SExpressionLexer;
-SYMBOLS:  (~([ \t\r\n] | '(' | ')' | '{' | '}' | '[' | ']'))+;
+SYMBOL:  (~([ \t\r\n] | '(' | ')' | '{' | '}' | '[' | ']'))+;
 
 LEFT_PAREN: '(';
 RIGHT_PAREN: ')';
