@@ -47,6 +47,4 @@ public class Calculator {
                     "Unexpected value: " + expression);
         };
     }
-
-    private enum Operation {Plus, Minus, Times, Divide}
 }

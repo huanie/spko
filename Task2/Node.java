@@ -7,10 +7,10 @@ public interface Node {
         var arguments = sexpression.rest();
         var head = sexpression.head().getText();
 
-        return new SExpression(head, recurse(arguments));
+        return new SExpression(head, traverse(arguments));
     }
 
-    private static Iterable<Node> recurse(
+    private static Iterable<Node> traverse(
             List<SExpressionParser.RestContext> arguments) {
         var argumentAccum = new ArrayList<Node>(arguments.size());
         for (var arg : arguments) {
@@ -31,10 +31,9 @@ public interface Node {
 
     record SExpression(String operation, Iterable<Node> arguments)
             implements Node {
-
         private SExpression(String text,
                             List<SExpressionParser.RestContext> rest) {
-            this(text, Node.recurse(rest));
+            this(text, Node.traverse(rest));
         }
     }
 
