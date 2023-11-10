@@ -1,19 +1,21 @@
+package Task2;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 public class Calculator {
-    private static final Map<String, Function<Double, Function<Double, Double>>>
+    private static final Map<String, BiFunction<Double, Double, Double>>
             operators;
 
     static {
-        Map<String, Function<Double, Function<Double, Double>>> map =
+        Map<String, BiFunction<Double, Double, Double>> map =
                 new HashMap<>();
-        map.put("+", x -> y -> x + y);
-        map.put("-", x -> y -> x - y);
-        map.put("*", x -> y -> x * y);
-        map.put("/", x -> y -> x / y);
+        map.put("+", (x, y) -> x + y);
+        map.put("-", (x, y) -> x - y);
+        map.put("*", (x, y) -> x * y);
+        map.put("/", (x, y) -> x / y);
         operators = Collections.unmodifiableMap(map);
     }
 
@@ -28,7 +30,7 @@ public class Calculator {
         var fun = operators.get(sexp.operation());
         while (iterator.hasNext()) {
             var arg = iterator.next();
-            accum = fun.apply(accum).apply(switch (arg) {
+            accum = fun.apply(accum, switch (arg) {
                 case Node.Literal x -> Double.parseDouble(x.literal());
                 case Node.SExpression reduce -> reduceSexp(reduce);
                 default -> throw new IllegalStateException(

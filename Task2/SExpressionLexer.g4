@@ -1,4 +1,5 @@
 lexer grammar SExpressionLexer;
+@lexer::header {package Task2;}
 SYMBOL:  (~([ \t\r\n] | '(' | ')' | '{' | '}' | '[' | ']'))+;
 
 LEFT_PAREN: '(';

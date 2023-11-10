@@ -1,5 +1,7 @@
 parser grammar SExpressionParser;
-
+@header {
+    package Task2;
+}
 options { tokenVocab=SExpressionLexer; }
 
 sexpression: LEFT_PAREN head rest* RIGHT_PAREN

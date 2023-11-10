@@ -1,3 +1,6 @@
+package Task2;
+
+import Task2.SExpressionParser;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
@@ -15,7 +18,7 @@ class SecondTask {
     public static void process(String path) throws IOException {
         var parser = new SExpressionParser(new CommonTokenStream(
                 new SExpressionLexer(CharStreams.fromPath(Path.of(path)))));
-        var tree = Node.parse(parser.sexpression());
+        var tree = Task2.Node.parse(parser.sexpression());
         System.out.println(tree);
         System.out.println(Calculator.calculate(tree));
     }

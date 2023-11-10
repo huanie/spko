@@ -1,3 +1,4 @@
+#set heading(numbering: "1.")
 = Task 1
 
 == a) Match Java format strings
@@ -117,7 +118,7 @@ Test: `(+ (+ 2 {+ 2 3}) { *  [/ 4 2]    5   })`
 
 I also maintain a grammar for Blueprint (https://jwestman.pages.gitlab.gnome.org/blueprint-compiler/) using tree-sitter on https://github.com/huanie/tree-sitter-blueprint :).
 
-== AST
+== b) AST <ast>
 
 My abstract syntax tree will consist of nodes which are sexpressions
 or literals. A sexpression contains the operation and arguments which
@@ -168,11 +169,9 @@ public interface Node {
 }
 ```
 
-Using the AST I made a calculator. Java's `Function<T,R>` only
-supports functions with one parameter, as a workaround I made use of
-currying. I also made good use of pattern matching which was
-introduced in Java 21 which eliminates the visitor pattern in my
-opinion.
+Using the AST I made a calculator. I made good use of pattern matching
+which was introduced in Java 21 which eliminates the visitor pattern
+in my opinion.
 
 The accumulator needs to be initialized with the first item in the
 argument list. Then the operation is checked to get the correct
@@ -181,17 +180,18 @@ function or the recursion will continue when encountering a
 sexpression.
 
 ```java
-private static final Map<String, Function<Double, Function<Double, Double>>>
+private static final Map<String, BiFunction<Double, Double, Double>>
         operators;
 static {
-    Map<String, Function<Double, Function<Double, Double>>> map =
+    Map<String, BiFunction<Double, Double, Double>> map =
             new HashMap<>();
-    map.put("+", x -> y -> x + y);
-    map.put("-", x -> y -> x - y);
-    map.put("*", x -> y -> x * y);
-    map.put("/", x -> y -> x / y);
+    map.put("+", (x, y) -> x + y);
+    map.put("-", (x, y) -> x - y);
+    map.put("*", (x, y) -> x * y);
+    map.put("/", (x, y) -> x / y);
     operators = Collections.unmodifiableMap(map);
 }
+
 private static double reduceSexp(Node.SExpression sexp) {
     var iterator = sexp.arguments().iterator();
     double accum = switch (iterator.next()) {
@@ -203,7 +203,7 @@ private static double reduceSexp(Node.SExpression sexp) {
     var fun = operators.get(sexp.operation());
     while (iterator.hasNext()) {
         var arg = iterator.next();
-        accum = fun.apply(accum).apply(switch (arg) {
+        accum = fun.apply(accum, switch (arg) {
             case Node.Literal x -> Double.parseDouble(x.literal());
             case Node.SExpression reduce -> reduceSexp(reduce);
             default -> throw new IllegalStateException(
@@ -214,3 +214,104 @@ private static double reduceSexp(Node.SExpression sexp) {
 }
 ```
 
+= Task 3
+
+== a) static semantic
+
+There is no static semantic with the current language. I will make it more specialized than `(fun arg1 arg2)`. It will become a calculator, limiting the functions to +, -, \* and /. There need to be at least 2 arguments.
+
+Static semantic is now in the number literals to see if the number literals fit in the number range.
+
+Only a few changes to the lexer and parser were done.
+
+Parser:
+```
+sexpression: LEFT_PAREN head arg arg+ RIGHT_PAREN
+           | LEFT_BRACKET head arg arg+ RIGHT_BRACKET
+           | LEFT_CURLY head arg arg+ RIGHT_CURLY
+           ;
+
+head: PLUS | MINUS | DIVIDE | TIMES;
+
+arg: Float | Integer | Long | Double
+   | sexpression
+   ;
+```
+
+Lexer:
+```
+fragment Digits: ([0-9])+ ;
+
+Float: Digits '.' Digits FloatSuffix?;
+
+Double: Digits '.' Digits DoubleSuffix;
+
+Integer: Digits;
+
+Long: Digits LongSuffix;
+
+fragment LongSuffix: [lL];
+fragment DoubleSuffix: [Dd];
+fragment FloatSuffix: [fF];
+```
+
+The only significant change in the code towards building the AST is:
+
+```java
+public Literal(TerminalNode terminal) {
+    Function<String,
+            Map.Entry<NumberType, Function<String, Number>>> fun =
+            x -> switch (terminal.getSymbol().getType()) {
+                case SExpressionLexer.Integer ->
+                        Map.entry(NumberType.Integer,
+                                o -> Integer.parseInt(o));
+                case SExpressionLexer.Double ->
+                        Map.entry(NumberType.Double,
+                                o -> Double.parseDouble(o));
+                case SExpressionLexer.Long ->
+                        Map.entry(NumberType.Long,
+                                o -> Long.parseLong(o));
+                case SExpressionLexer.Float ->
+                        Map.entry(NumberType.Float,
+                                o -> Float.parseFloat(o));
+                default -> throw new RuntimeException(
+                        "What is this: " + x);
+            };
+    this.literal = parseValue(terminal, fun);
+}
+
+private Number parseValue(TerminalNode string,
+                          Function<String, Map.Entry<NumberType, Function<String, Number>>> parseFun) {
+    var noSuffix = removeSuffix(string.getText());
+    var f = parseFun.apply(noSuffix);
+    try {
+        var number = f.getValue().apply(noSuffix);
+        if (List.of(new Number[]{Double.POSITIVE_INFINITY,
+                Double.NEGATIVE_INFINITY, Double.NaN,
+                Float.POSITIVE_INFINITY,
+                Float.NEGATIVE_INFINITY,
+                Float.NaN}).contains(number)) {
+            throw new NumberFormatException();
+        } else {
+            return number;
+        }
+    } catch (NumberFormatException e) {
+        Node.errors.add(String.format("%s is not a %s: %s:%s",
+                string.getText(),
+                f.getKey(),
+                string.getSymbol().getLine(),
+                string.getSymbol().getCharPositionInLine()));
+        return Float.NaN;
+    }
+}
+```
+
+This will collect errors if Java couldn't parse the number to the format that was parsed. At the end of building the AST, it will report all the errors (not shown here).
+
+`(+ (+ 2  {+ 2.23f 2323.23d 3.23}) { *  [/ 4L 2] 2234278364672834678234786234876234   })`, will report that `2234278364672834678234786234876234` is not an Integer.
+
+The calculator from last task (@ast), remains unchanged.
+
+== b) Dynamic semantic
+
+See @ast. It is an interpreter, calculating arithmetic expressions.
