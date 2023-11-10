@@ -120,8 +120,7 @@ I also maintain a grammar for Blueprint (https://jwestman.pages.gitlab.gnome.org
 
 == b) AST <ast>
 
-My abstract syntax tree will consist of nodes which are sexpressions
-or literals. A sexpression contains the operation and arguments which
+My abstract syntax tree will consist of nodes which are "sexpressions". A sexpression contains the operation and arguments which
 are nodes.
 
 
