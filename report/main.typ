@@ -315,3 +315,144 @@ The calculator from last task (@ast), remains unchanged.
 == b) Dynamic semantic
 
 See @ast. It is an interpreter, calculating arithmetic expressions.
+
+= Prolog
+
+== Matching table
+
+```
+?- [X,Y,Z] = [john,likes,fish].
+X = john,
+Y= likes,
+Z = fish
+
+?- [cat] = [X|Y].
+X = cat,
+Y = [] % The end of a list is the empty list (cons 1 (cons 2 '())) '(1 2)
+
+?- [X,Y|Z] = [mary,likes,wine].
+X = mary,
+Y = likes,
+Z = [wine] % the rest starting from the 2nd element, same reason as above
+
+?- [[the,Y]|Z] = [[X,hare],[is,here]].
+X= the,
+Y = hare,
+Z = [[is,here]] % the rest starting from the 1st element, the rest is a list!
+
+?- [golden|T] = [golden,norfolk].
+T = [norfolk] % the rest starting from the 1st element
+
+?- [white,horse] = [horse,X].
+false % not possible
+
+?- [white|Q] = [P,horse].
+P = white, % the first element from left
+Q = [horse] % the rest starting from first element
+```
+
+== Factorial
+
+```prolog
+factorial(N,R) :- fakAcc(N,1,R).
+facAcc(0,R,R).
+facAcc(N,Acc,R) :-
+    Acc1 is Acc*N,
+    N1 is N-1,
+    facAcc(N1,Acc1,R), !.
+```
+
+Accumulator solution. The base case where unifying R with R is necessary to transfer the Result to R. `Acc1 is Acc*N` computes the factorial, `N1 is N-1` is the iteration step. `, !` at the end is optional but makes the output remove the `false`.
+
+== Call history
+
+```prolog
+append([],L,L).
+append([H|T1],L,[H|T2]) :- append(T1,L,T2).
+```
+
+=== append(X,Y,[1,2,3,4]).
+
+```
+append(X,Y,[1,2,3,4]).
+% only base case
+X = [],
+Y = [1,2,3,4],
+L = [1,2,3,4]
+% first recurse and then base case
+append([1|T1],Y,[1|[2,3,4]]) :- append(T1,Y,[2,3,4]).
+append(T1,Y,[2,3,4])
+T1 = []
+Y = [2,3,4]
+L = [2,3,4]
+X = [1] % backtrack from recursion T1 = [], [1|[]] = [1]
+% 2 recusion and then base
+T2 = []
+T1 = [2]
+Y = [3,4]
+X = [1,2] % [1|T1] but [T1|T2]
+% full recursion
+X = [1,2,3,4]
+```
+
+=== append(X,[1,2,3,4],Y).
+
+```prolog
+append(X,[1,2,3,4],Y).
+% only base case
+X = [],
+Y = [1,2,3,4]
+% 1 recursion
+append([H|T1],[1,2,3,4],[H|T2]) :- append(T1,[1,2,3,4],T2).
+T1 = [],
+T2 = [1,2,3,4],
+X = [H],
+Y = [H,1,2,3,4] % H could not be found
+% 2 recursions
+append(H|T1,[1,2,3,4],[H|T2]) :- append(T1,[1,2,3,4],T2).
+append(H1|T3,[1,2,3,4],[H1|T4]) :- append(T3,[1,2,3,4],T4).
+T3 = [],
+T4 = [1,2,3,4],
+[H|T1] = [H1|T3]
+X = [H|H1],
+T2 = [H1|[1,2,3,4]],
+Y = [H,H1,1,2,3,4],
+% the recursion can go forever
+```
+
+== sum
+
+```prolog
+sum(L,R) :- sumAcc(L,0,R).
+sumAcc([],R,R).
+sumAcc([H|T],Acc,R) :-
+    Acc1 is H+Acc,
+    sumAcc(T,Acc1,R).
+```
+
+Another accumulator solution. Accumulator is initialized with 0 and the head of the list is added to it in every iteration until the list is empty.
+
+== Train connections
+
+```prolog
+zug(konstanz, 08.39, offenburg, 10.59).
+zug(konstanz, 08.39, karlsruhe, 11.49).
+zug(konstanz, 08.53, singen, 09.26).
+zug(singen, 09.37, stuttgart, 11.32).
+zug(offenburg, 11.27, mannheim, 12.24).
+zug(karlsruhe, 12.06, mainz, 13.47).
+zug(stuttgart, 11.51, mannheim, 12.28).
+zug(mannheim, 12.39, mainz, 13.18).
+
+verbindung(Start,At,End,Plan) :- verbindungAcc(Start,At,End,[],Plan).
+verbindungAcc(End,_,End,Plan,Plan).
+verbindungAcc(Start,At,End,Acc,Plan) :-
+    zug(Start,Leave,Stop,Arrive),
+    Leave > At,
+    append(Acc,[zug(Start,Leave,Stop,Arrive)],X),
+    verbindungAcc(Stop,Arrive,End,X,Plan).
+```
+
+To get a train plan, my approach is to check from the starting station the trains that come to that station and this will repeat until the train reaches the end station.
+
+`zug(Start,Leave,Stop,Arrive)` will find the station that have a connection from `Start`. The other variables will be filled out. This solution is only valid if the `Arrival` of the train is after the time `At` you want to start at. When it is valid I collect this connection in the accumulator. This will repeat until the end station is reached. It will give all possible connections.
