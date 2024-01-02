@@ -1,0 +1,44 @@
+delimiters "$", "$"
+
+class_table(n) ::= <<
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<style type="text/css">
+th, td { border-bottom: thin solid; padding: 4px; text-align: left; }
+td { font-family: monospace }
+</style>
+</head>
+<body>
+<h1>Sprachkonzepte, Aufgabe 6</h1>
+$n:inspect(); separator="\n"$
+</body>
+</html>
+>>
+
+inspect(o) ::= <<
+<h2>class $o.name$:</h2>
+<table>
+<tbody>
+$if(o.interface)$
+<tr><th>Methods</th></tr>
+<tr><td>
+$o.methods; separator="<br>\n"$
+</td></tr>
+$else$
+<tr><th>Interface</th><th>Methods</th></tr>
+$o.interfaces:interface(); separator="\n"$
+$endif$
+</tbody>
+</table>
+<br>
+>>
+
+interface(i) ::= <<
+<tr>
+<td valign="top">$i.name$</td>
+<td>
+$i.methods; separator="<br>\n"$
+</td>
+</tr>
+>>

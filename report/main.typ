@@ -545,3 +545,66 @@ verbindungAcc(Start,At,End,Acc,Plan) :-
 To get a train plan, my approach is to check from the starting station the trains that come to that station and this will repeat until the train reaches the end station.
 
 `zug(Start,Leave,Stop,Arrive)` will find the station that have a connection from `Start`. The other variables will be filled out. This solution is only valid if the `Arrival` of the train is after the time `At` you want to start at. When it is valid I collect this connection in the accumulator. This will repeat until the end station is reached. It will give all possible connections.
+
+= Task 6
+
+The template is written as follows:
+
+`delimiters "$", "$"`, will replace going to "expression mode" `<expr>` with `$expr$`.
+
+The start of the template:
+
+```html
+class_table(n) ::= <<
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<style type="text/css">
+th, td { border-bottom: thin solid; padding: 4px; text-align: left; }
+td { font-family: monospace }
+</style>
+</head>
+<body>
+<h1>Sprachkonzepte, Aufgabe 6</h1>
+$n:inspect(); separator="\n"$
+</body>
+</html>
+>>
+```
+
+It is the HTML document. `$n:inspect(); separator="\n"$` will call the `inspect` template with every element in `n` and inserts a newline after each call.
+
+```html
+inspect(o) ::= <<
+<h2>class $o.name$:</h2>
+<table>
+<tbody>
+$if(o.interface)$
+<tr><th>Methods</th></tr>
+<tr><td>
+$o.methods; separator="<br>\n"$
+</td></tr>
+$else$
+<tr><th>Interface</th><th>Methods</th></tr>
+$o.interfaces:interface(); separator="\n"$
+$endif$
+</tbody>
+</table>
+<br>
+>>
+```
+
+`$o.name$` will be the fully qualified name. Furthermore a distinction between interface and class must be made. For interfaces only a box with the methods `$o.methods; separator="<br>\n"$` is created. Classes will call another template for each interface they implement.
+
+```html
+interface(i) ::= <<
+<tr>
+<td valign="top">$i.name$</td>
+<td>
+$i.methods; separator="<br>\n"$
+</td>
+</tr>
+>>
+```
+
+Each table row consists of a cell with the fully qualified name `$i.name$` and another cell with their methods `$i.methods; separator="<br>\n"$`.
