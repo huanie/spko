@@ -316,7 +316,96 @@ The calculator from last task (@ast), remains unchanged.
 
 See @ast. It is an interpreter, calculating arithmetic expressions.
 
-= Prolog
+= Task 4
+
+== a) Procudural
+
+```java
+readLines(Files.newBufferedReader(input), lines);
+removeEmptyLines(lines);
+removeShortLines(lines);
+int n = totalLineLengths(lines);
+```
+
+These lines in the main method already show a procedural step by step approach. The procedures produce side effects by modifying the passed list.
+
+```java
+private static void readLines(BufferedReader buffer, LinkedList<String> lines) {
+    try {
+        String line;
+        while ((line = buffer.readLine()) != null) {
+            lines.add(line);
+        }
+    } catch (Exception e) {
+        System.out.println("Hi");
+    }
+}
+```
+
+Here a temporary variable `line` is created to read the buffer, eventually emptying it. The `line` is added to the passed `lines` list, which is an output parameter.
+
+```java
+private static void removeEmptyLines(LinkedList<String> lines) {
+    var collect = new LinkedList<String>();
+    for (var i = 0; i < lines.size(); i++) {
+        var line = lines.get(i);
+        if (!line.isBlank()) {
+            collect.add(line);
+        }
+    }
+    lines.clear();
+    lines.addAll(collect);
+}
+```
+
+This procedure is tricky when using an imperative style because some people might want to directly modify the `lines` list. Modifying the list is incorrect as it will invalidate the loop through the elements. First up a `collect` list is created to hold the results. Looping through the elements of the `lines` list to only add lines that are not blank. At last the list with the results is replaced with the original list (which might not be as fast).
+
+```java
+private static void removeShortLines(LinkedList<String> lines) {
+    var collect = new LinkedList<String>();
+    for (var i = 0; i < lines.size(); i++) {
+        var line = lines.get(i);
+        if (MIN_LENGTH <= line.length()) {
+            collect.add(line);
+        }
+    }
+    lines.clear();
+    lines.addAll(collect);
+}
+```
+
+Here the same approach was taken.
+
+```java
+private static int totalLineLengths(LinkedList<String> lines) {
+    var count = 0;
+    for (var i = 0; i < lines.size(); i++) {
+        count += lines.get(i).length();
+    }
+    return count;
+}
+```
+
+Iterating over the list to count the length of all lines which are added to a `count` counter.
+
+This style usually requires more typing, uses local variables to accumulate results and is heavy on side effects.
+
+== b) Functional
+
+```java
+var n = Files.newBufferedReader(input).lines().filter(l -> !l.isBlank() && MIN_LENGTH <= l.length()).mapToInt(l -> l.length()).sum();
+```
+
+A one liner which explains what kind of transformations to the stream should be done with lambdas.
+
+== c)
+
+- Procedural: `result = 14242 (5005 microsec)`
+- Functional: `result = 14242 (5352 microsec)`
+
+The procedural version is still faster despite the inefficient filter procedures in Java.
+
+= Task 5
 
 == Matching table
 
