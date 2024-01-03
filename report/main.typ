@@ -608,3 +608,26 @@ $i.methods; separator="<br>\n"$
 ```
 
 Each table row consists of a cell with the fully qualified name `$i.name$` and another cell with their methods `$i.methods; separator="<br>\n"$`.
+
+= Task 7
+
+The script language I use is Emacs Lisp. Following code is a contribution to a major-mode (provides language relevant editing, syntax-highlighting, navigation) https://git.sr.ht/~meow_king/typst-ts-mode.
+
+Diff: `git diff 361dfe60:typst-ts-mode.el aad1cde1:typst-ts-mode.el`
+
+#raw(read("./diff.el"), lang: "lisp")
+
+The functionality that was added is manipulating and navigating headings in a markup language called "Typst". Switching headings of the same level up or down. Decreasing or increasing the level of the heading and its children. Most of the functionality is provided by the `outline` library (after I discovered that it exists). I only added glue code to either do something with the heading when the cursor is pointing at one or execute the default command for given keybinding when it is not pointing at one.
+
+Emacs Lisp is a multi-paradigm (more imperative leaning) high level scripting language.
+
+It is garbage collected, so I do not need to care about memory management.
+
+It has dynamic typing which is showcased in `typst-ts-mode-heading--at-point-p` returning either a nil or an object. Anything that is not nil or empty list is true. Exception handling is not enforced, I do not know what can be thrown and neither do I handle any.
+
+I extensively used the interactive nature of the language. Any expression can be tested in a REPL or by typing it and then pressing `Ctrl+x Ctrl+e` after it. I used it to quickly explore the effect of functions I do not know about and to fix my own code.
+
+Many functions are implemented in C for speed.
+Taking `save-excursion` as an example, it will keep the cursor position for the user even when the functions in the body move the pointer.
+
+I don't use dynamic scoping and had to do workarounds to avoid it (nobody wants it). A comment on the first line of the file is needed to enable lexical scoping. Even with the option enabled, only variables that were declared in `let` are lexically scoped.
